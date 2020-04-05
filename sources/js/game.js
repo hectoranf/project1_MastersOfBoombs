@@ -17,51 +17,93 @@ class Game {
       update() {
             this.scenary.update()
             this.player.update()
+            this.checkPlayerCollisions()
       }
 
       //Movimiento del jugador
       setListeners() {
             document.addEventListener("keydown", e => {
+
                   switch (e.keyCode) {
                         //ARRIBA
                         case 38:
-                              this.lastKeyPressed = 38
-                              this.player.changeDirection('UP')
+                              if (this.player.direction != 'BLOCKED-UP') {
+                                    this.lastKeyPressed = 38
+                                    this.player.changeDirection('UP')
+                              }
                               break
                         //ABAJO
                         case 40:
-                              this.lastKeyPressed = 40
-                              this.player.changeDirection('DOWN')
+                              if (this.player.direction != 'BLOCKED-DOWN') {
+                                    this.lastKeyPressed = 40
+                                    this.player.changeDirection('DOWN')
+                              }
                               break
                         //IZQUIERDA
                         case 37:
-                              this.lastKeyPressed = 37
-                              this.player.changeDirection('LEFT')
+                              if (this.player.direction != 'BLOCKED-LEFT') {
+                                    this.lastKeyPressed = 37
+                                    this.player.changeDirection('LEFT')
+                              }
                               break
                         //DERECHA
                         case 39:
-                              this.lastKeyPressed = 39
-                              this.player.changeDirection('RIGHT')
+                              if (this.player.direction != 'BLOCKED-RIGHT') {
+                                    this.lastKeyPressed = 39
+                                    this.player.changeDirection('RIGHT')
+                              }
                               break
                         //ESPACIO
                         case 32:
-                              this.player.tileCoord.row = Math.round(this.player.posY / this.tileSize)
-                              this.player.tileCoord.col = Math.round(this.player.posX / this.tileSize)
-                              console.log(this.player.tileCoord.col);
+
+                              console.log('Boomb');
                               break
                   }
             });
+
             document.addEventListener("keyup", e => {
                   if (this.lastKeyPressed === e.keyCode) {
-
                         this.lastKeyPressed = undefined
-                        this.player.changeDirection('')
+                        this.player.direction.indexOf('BLOCKED') === -1 ? this.player.changeDirection('') : null
                   }
             })
       }
 
-      checkCollisions() {
+      //Colision del jugador con el escenario
+      checkPlayerCollisions() {
+            //Se comprueba la colision solo con las celdas alrededor del jugador
+            for (let i = this.player.tileCoord.row - 1; i <= this.player.tileCoord.row + 1; i++) {
+                  for (let j = this.player.tileCoord.col - 1; j <= this.player.tileCoord.col + 1; j++) {
+                        //Condiciónes de colisión
+                        if (this.scenary.scenaryTiles[i][j].isBlocking) {
+                              if (this.scenary.scenaryTiles[i][j].posX < this.player.posX + this.player.width &&
+                                    this.scenary.scenaryTiles[i][j].posX + this.scenary.scenaryTiles[i][j].size > this.player.posX &&
+                                    this.scenary.scenaryTiles[i][j].posY < this.player.posY + this.player.height &&
+                                    this.scenary.scenaryTiles[i][j].posY + this.scenary.scenaryTiles[i][j].size > this.player.posY) {
+                                    //Gestión del movimiento y posicion del jugador en caso de colisión
+                                    switch (this.player.direction) {
+                                          case 'UP':
+                                                this.player.direction = 'BLOCKED-UP'
+                                                this.player.translate(this.player.posX, this.scenary.scenaryTiles[i][j].posY + this.scenary.scenaryTiles[i][j].size)
+                                                break
+                                          case 'DOWN':
+                                                this.player.direction = 'BLOCKED-DOWN'
+                                                this.player.translate(this.player.posX, this.scenary.scenaryTiles[i][j].posY - this.player.height)
+                                                break
+                                          case 'LEFT':
+                                                this.player.direction = 'BLOCKED-LEFT'
+                                                this.player.translate(this.scenary.scenaryTiles[i][j].posX + this.scenary.scenaryTiles[i][j].size, this.player.posY)
+                                                break
+                                          case 'RIGHT':
+                                                this.player.direction = 'BLOCKED-RIGHT'
+                                                this.player.translate(this.scenary.scenaryTiles[i][j].posX - this.player.width, this.player.posY)
+                                                break
+                                    }
+                              }
+                        }
 
+                  }
+            }
       }
 
 }

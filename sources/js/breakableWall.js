@@ -5,6 +5,9 @@ class BreakableWall extends Tile {
             this.tile = undefined
             this.brokenImage = undefined
             this.initTile()
+
+            //Propiedades de paredes
+            this.isBlocking = true
       }
 
       initTile() {
