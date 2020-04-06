@@ -3,6 +3,7 @@ class Player {
       constructor(ctx, tileSize, tileX, tileY) {
             this.ctx = ctx
             this.tileSize = tileSize
+            this.timer = 0
 
             //Collider position
             this.width = this.tileSize * 0.7
@@ -25,64 +26,79 @@ class Player {
             }
 
             this.direction = ''
-            this.speed = 3
+            this.speed = 4
 
             //IMAGEN
-            this.image = new Image()
-            this.image.src = './images/player/PlayerFull.png'
-            this.spritePosX = 0
-            this.spritePosY = 0
-            this.image.onload = () => {
-                  this.spriteWidth = this.image.width / 8
-                  this.spriteHeight = this.image.height / 3
-            }
+
+            this.animations = [
+                  new Sprite(this.ctx, 120, 'player/player.png', 4, this.imgProperties.width, this.imgProperties.height, 4, 0),
+                  new Sprite(this.ctx, 120, 'player/player.png', 4, this.imgProperties.width, this.imgProperties.height, 4, 1),
+                  new Sprite(this.ctx, 120, 'player/player.png', 4, this.imgProperties.width, this.imgProperties.height, 4, 2),
+                  new Sprite(this.ctx, 120, 'player/player.png', 4, this.imgProperties.width, this.imgProperties.height, 4, 3)
+            ]
+            this.currentAnimationIndex = 0
+
             this.frameDirection = 'DOWN'
+
+            this.bombs = []
+            this.maxBombs = 1
       }
 
 
-      update() {
-            this.draw()
-            this.move()
+      update(deltaTime) {
+            // this.drawCollider()
+            this.updateTimer(deltaTime)
+            this.move(this.timer)
+            this.updateBombs(deltaTime)
       }
 
-      draw() {
+      updateTimer(deltaTime) {
+            this.timer + deltaTime >= 10000 ? this.timer = 0 : this.timer += deltaTime
+      }
+
+      drawCollider() {
             //pintando el collider
             this.ctx.fillStyle = 'tomato'
             this.ctx.fillRect(this.posX, this.posY, this.width, this.height)
-            //Image
-            this.drawAnimation()
       }
 
       changeDirection(direction) {
             this.direction = direction
       }
 
-      move() {
+      move(timer) {
             //Desplaza según la dirección
             switch (this.direction) {
                   case 'UP':
                         this.posY -= this.speed
                         this.imgProperties.posY -= this.speed
                         this.updateCoords()
+                        this.currentAnimationIndex = 1
                         break
                   case 'DOWN':
                         this.posY += this.speed
                         this.imgProperties.posY += this.speed
                         this.updateCoords()
-                        break
-                  case 'LEFT':
-                        this.posX -= this.speed
-                        this.imgProperties.posX -= this.speed
-                        this.updateCoords()
+                        this.currentAnimationIndex = 0
                         break
                   case 'RIGHT':
                         this.posX += this.speed
                         this.imgProperties.posX += this.speed
                         this.updateCoords()
+                        this.currentAnimationIndex = 2
+                        break
+                  case 'LEFT':
+                        this.posX -= this.speed
+                        this.imgProperties.posX -= this.speed
+                        this.updateCoords()
+                        this.currentAnimationIndex = 3
                         break
                   default:
+                        this.animations[this.currentAnimationIndex].reset()
+                        timer = 1
                         break
             }
+            this.animations[this.currentAnimationIndex].draw(timer, this.imgProperties.posX, this.imgProperties.posY)
 
       }
 
@@ -100,6 +116,7 @@ class Player {
             this.imgProperties.posY = newPosY - this.tileSize * 0.55
       }
 
+      //Dibuja al jugador en el sprite correcto
       drawAnimation() {
             this.frameDirection != this.direction ? this.frameDirection = this.direction : null
 
@@ -123,16 +140,18 @@ class Player {
                   default:
                         break
             }
-            this.ctx.drawImage(this.image,
-                  this.spritePosX * this.spriteWidth,
-                  this.spritePosY,
-                  this.spriteWidth,
-                  this.spriteHeight,
-                  this.imgProperties.posX,
-                  this.imgProperties.posY,
-                  this.imgProperties.width,
-                  this.imgProperties.height)
 
+      }
+
+      putBomb() {
+            if (this.bombs.length < this.maxBombs) {
+                  this.bombs.push(new Bomb(this.ctx, this.tileCoord.col, this.tileCoord.row, this.tileSize))
+            }
+      }
+
+      updateBombs(deltaTime) {
+            this.bombs.forEach(elm => elm.update(deltaTime))
+            this.bombs = this.bombs.filter(elm => !elm.isExploded)
       }
 
 }

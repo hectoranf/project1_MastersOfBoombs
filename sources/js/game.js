@@ -2,6 +2,7 @@ class Game {
       constructor(ctx) {
             this.ctx = ctx
 
+
             this.tileSize = 65
 
             //Escenario
@@ -14,9 +15,9 @@ class Game {
             this.setListeners()
       }
 
-      update() {
+      update(deltaTime) {
             this.scenary.update()
-            this.player.update()
+            this.player.update(deltaTime)
             this.checkPlayerCollisions()
       }
 
@@ -55,7 +56,7 @@ class Game {
                               break
                         //ESPACIO
                         case 32:
-
+                              this.player.putBomb()
                               console.log('Boomb');
                               break
                   }

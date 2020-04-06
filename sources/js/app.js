@@ -10,7 +10,6 @@ const app = {
             width: undefined,
             height: undefined
       },
-      timer: 0,
       deltaTime: 20,
       game: undefined,
 
@@ -32,7 +31,7 @@ const app = {
       update() {
             //Se limpia la pantalla
             this.clearScreen()
-            this.game.update()
+            this.game.update(this.deltaTime)
       },
 
       setDimensions() {
