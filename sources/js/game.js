@@ -2,7 +2,6 @@ class Game {
       constructor(ctx) {
             this.ctx = ctx
 
-
             this.tileSize = 65
 
             //Escenario
@@ -19,6 +18,7 @@ class Game {
             this.scenary.update()
             this.player.update(deltaTime)
             this.checkPlayerCollisions()
+            this.checkExplosions()
       }
 
       //Movimiento del jugador
@@ -57,7 +57,6 @@ class Game {
                         //ESPACIO
                         case 32:
                               this.player.putBomb()
-                              console.log('Boomb');
                               break
                   }
             });
@@ -102,9 +101,28 @@ class Game {
                                     }
                               }
                         }
-
                   }
             }
+      }
+
+      checkExplosions() {
+            this.player.bombs.forEach(elm => {
+                  if (elm.isExploded) {
+                        if (elm.coord.x + 1 < this.scenary.scenaryMap[elm.coord.y].length) {
+                              this.scenary.scenaryMap[elm.coord.y][elm.coord.x + 1] === 'B' ? this.scenary.scenaryTiles[elm.coord.y][elm.coord.x + 1].isBreaking = true : null
+                        }
+                        if (elm.coord.x - 1 >= 0) {
+                              this.scenary.scenaryMap[elm.coord.y][elm.coord.x - 1] === 'B' ? this.scenary.scenaryTiles[elm.coord.y][elm.coord.x - 1].isBreaking = true : null
+                        }
+                        if (elm.coord.y + 1 < this.scenary.scenaryMap.length) {
+                              this.scenary.scenaryMap[elm.coord.y + 1][elm.coord.x] === 'B' ? this.scenary.scenaryTiles[elm.coord.y + 1][elm.coord.x].isBreaking = true : null
+                        }
+                        if (elm.coord.y - 1 >= 0) {
+                              this.scenary.scenaryMap[elm.coord.y - 1][elm.coord.x] === 'B' ? this.scenary.scenaryTiles[elm.coord.y - 1][elm.coord.x].isBreaking = true : null
+                        }
+                        elm.isDone = true
+                  }
+            })
       }
 
 }

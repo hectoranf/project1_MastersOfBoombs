@@ -22,6 +22,7 @@ class Tile {
             this.draw()
       }
 
+      //Dibuja el tile
       draw() {
             this.ctx.drawImage(this.tile, this.posX, this.posY, this.size, this.size)
       }
