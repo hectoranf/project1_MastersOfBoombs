@@ -41,6 +41,10 @@ class Player {
             //BOMBAS
             this.bombs = []
             this.maxBombs = 1
+
+            this.lifes = 3
+            this.vulnerable = true
+            this.isVisible = true
       }
 
 
@@ -99,7 +103,8 @@ class Player {
                         timer = 1
                         break
             }
-            this.animations[this.currentAnimationIndex].draw(timer, this.imgProperties.posX, this.imgProperties.posY)
+            if (this.isVisible) this.animations[this.currentAnimationIndex].draw(timer, this.imgProperties.posX, this.imgProperties.posY)
+            if (!this.vulnerable) this.isVisible = !this.isVisible
       }
 
       //Calcula el tile en el que está el player
@@ -114,6 +119,16 @@ class Player {
             this.imgProperties.posX = newPosX - (this.tileSize - this.width) / 2
             this.posY = newPosY
             this.imgProperties.posY = newPosY - this.tileSize * 0.65
+      }
+
+      getDamage() {
+            this.vulnerable = false
+            this.lifes--
+            console.log(this.lifes);
+            setTimeout(() => {
+                  this.vulnerable = true
+                  this.isVisible = true
+            }, 3000)
       }
 
       //Crea una bomba nueva

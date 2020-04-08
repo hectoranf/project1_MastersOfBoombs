@@ -4,22 +4,119 @@ class Game {
 
             this.tileSize = 65
 
-            //Escenario
+            //ESCENARIO
             this.scenary = new Scenary(this.ctx, this.tileSize)
-            //Jugador
+            //PLAYER
             this.player = new Player(this.ctx, this.tileSize, 1, 1)
             //lastKeyPressed se usa para poner bombas mientras se mueve el jugador. No le frena
             this.lastKeyPressed = undefined
+            //ENEMIGOS
+            this.enemies = []
+            this.initEnemies()
 
             this.setListeners()
       }
 
       update(deltaTime) {
             this.scenary.update()
+            this.updateEnemies(deltaTime)
             this.player.update(deltaTime)
             this.checkPlayerCollisions()
             this.checkExplosions()
+            this.checkGameOver()
       }
+
+      initEnemies() {
+            let coordY = 0
+            let coordX = 0
+            this.scenary.scenaryMap.forEach(row => {
+                  row.forEach(elm => {
+                        elm === '1' ? this.enemies.push(new Enemy(this.ctx, coordX, coordY, this.tileSize, elm)) : elm === '2' ? null : null
+                        coordX++
+                  })
+                  coordY++
+                  coordX = 0
+            })
+      }
+
+
+
+      updateEnemies(deltaTime) {
+            this.enemies.forEach(elm => {
+                  //Mueve y pinta
+                  elm.update(deltaTime)
+                  //Calcula rutas
+                  if (elm.isDestinyReached) this.calculateNextDestiny(elm)
+                  this.checkEnemyCollisions(elm)
+            })
+      }
+
+      //Comprueba si el enemigo toca al jugador
+      checkEnemyCollisions(enemy) {
+            //Si el jugador no es invulnerable
+            if (this.player.vulnerable) {
+                  this.checkCollision(enemy.posX, enemy.posY, enemy.width, enemy.height,
+                        this.player.posX, this.player.posY, this.player.width, this.player.height) ? this.player.getDamage() : null
+            }
+      }
+
+
+      calculateNextDestiny(enemy) {
+            //  Math.floor(Math.random()*3.9)
+            switch (enemy.direction) {
+                  case 'UP':
+                  case 0:
+                        //Si no hay obstaculos en el camino no cambia de ruta. Si en frente tiene un obstaculo calcula aleatoriamente otra dirección
+                        if (this.scenary.scenaryTiles[enemy.coord.y - 1][enemy.coord.x].isBlocking) {
+
+                              enemy.direction = Math.floor(Math.random() * 3.9)
+                              this.calculateNextDestiny(enemy)
+                        } else {//No hay obstaculos en su dirección
+                              enemy.direction = 'UP'
+                              enemy.destinyPos.y = this.scenary.scenaryTiles[enemy.coord.y - 1][enemy.coord.x].posY
+                              enemy.coord.y--
+                              enemy.isDestinyReached = false
+                        }
+                        break
+                  case 'DOWN':
+                  case 1:
+                        if (this.scenary.scenaryTiles[enemy.coord.y + 1][enemy.coord.x].isBlocking) {
+                              enemy.direction = Math.floor(Math.random() * 3.9)
+                              this.calculateNextDestiny(enemy)
+                        } else {
+                              enemy.direction = 'DOWN'
+                              enemy.destinyPos.y = this.scenary.scenaryTiles[enemy.coord.y + 1][enemy.coord.x].posY
+                              enemy.coord.y++
+                              enemy.isDestinyReached = false
+                        }
+                        break
+                  case 'RIGHT':
+                  case 2:
+                        if (this.scenary.scenaryTiles[enemy.coord.y][enemy.coord.x + 1].isBlocking) {
+                              enemy.direction = Math.floor(Math.random() * 3.9)
+                              this.calculateNextDestiny(enemy)
+                        } else {
+                              enemy.direction = 'RIGHT'
+                              enemy.destinyPos.x = this.scenary.scenaryTiles[enemy.coord.y][enemy.coord.x + 1].posX
+                              enemy.coord.x++
+                              enemy.isDestinyReached = false
+                        }
+                        break
+                  case 'LEFT':
+                  case 3:
+                        if (this.scenary.scenaryTiles[enemy.coord.y][enemy.coord.x - 1].isBlocking) {
+                              enemy.direction = Math.floor(Math.random() * 3.9)
+                              this.calculateNextDestiny(enemy)
+                        } else {
+                              enemy.direction = 'LEFT'
+                              enemy.destinyPos.x = this.scenary.scenaryTiles[enemy.coord.y][enemy.coord.x - 1].posX
+                              enemy.coord.x--
+                              enemy.isDestinyReached = false
+                        }
+                        break
+            }
+      }
+
 
       //Movimiento del jugador
       setListeners() {
@@ -76,10 +173,10 @@ class Game {
                   for (let j = this.player.tileCoord.col - 1; j <= this.player.tileCoord.col + 1; j++) {
                         //Condiciónes de colisión
                         if (this.scenary.scenaryTiles[i][j].isBlocking) {
-                              if (this.scenary.scenaryTiles[i][j].posX < this.player.posX + this.player.width &&
-                                    this.scenary.scenaryTiles[i][j].posX + this.scenary.scenaryTiles[i][j].size > this.player.posX &&
-                                    this.scenary.scenaryTiles[i][j].posY < this.player.posY + this.player.height &&
-                                    this.scenary.scenaryTiles[i][j].posY + this.scenary.scenaryTiles[i][j].size > this.player.posY) {
+
+                              if (this.checkCollision(this.scenary.scenaryTiles[i][j].posX, this.scenary.scenaryTiles[i][j].posY,
+                                    this.scenary.scenaryTiles[i][j].size, this.scenary.scenaryTiles[i][j].size,
+                                    this.player.posX, this.player.posY, this.player.width, this.player.height)) {
                                     //Gestión del movimiento y posicion del jugador en caso de colisión
                                     switch (this.player.direction) {
                                           case 'UP':
@@ -105,6 +202,7 @@ class Game {
             }
       }
 
+      //Comprueba la explosión en de los tiles adyacentes en cruz (arriba, abajo, izquierda y derecha)
       checkExplosions() {
             this.player.bombs.forEach(elm => {
                   if (elm.isExploded) {
@@ -123,6 +221,16 @@ class Game {
                         elm.isDone = true
                   }
             })
+      }
+
+      //Comprueba si dos elmentos colisionan
+      checkCollision(x1, y1, width1, height1, x2, y2, width2, height2) {
+            if (x1 < x2 + width2 && x1 + width1 > x2 && y1 < y2 + height2 && y1 + height1 > y2) return true
+            return false
+      }
+
+      checkGameOver() {
+            this.player.lifes <= 0 ? alert('FIN DEL JUEGO') : null
       }
 
 }
